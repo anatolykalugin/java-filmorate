@@ -29,13 +29,9 @@ public class FilmController {
     @PostMapping
     public Film addNewFilm(@Valid @RequestBody Film film) {
         log.info("Запрос на добавление нового фильма");
-        if (film.getDescription().length() > 200) {
-            log.warn("Описание слишком длинное");
-            throw new ValidationException("Описание фильма должно быть короче 200 символов.");
-        }
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.warn("Дата релиза некорректная - " + film.getReleaseDate());
-            throw new ValidationException("Неверная дата релиза.");
+        if (!validateFilm(film)) {
+            log.warn("Валидация не пройдена");
+            throw new ValidationException("Валидация не пройдена");
         }
         if (filmMap.containsKey(film.getId())) {
             log.warn("Запрос на добавление уже существующего фильма");
@@ -51,18 +47,19 @@ public class FilmController {
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("Запрос на изменение фильма");
         if (filmMap.containsKey(film.getId())) {
-            if (film.getDescription().length() > 200) {
-                log.warn("Описание слишком длинное");
-                throw new ValidationException("Описание фильма должно быть короче 200 символов.");
-            }
-            if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-                log.warn("Дата релиза некорректная - " + film.getReleaseDate());
-                throw new ValidationException("Неверная дата релиза.");
+            if (!validateFilm(film)) {
+                log.warn("Валидация не пройдена");
+                throw new ValidationException("Валидация не пройдена");
             }
             filmMap.put(film.getId(), film);
         } else {
             throw new NoSuchItemException("Невозможно изменить данный фильм");
         }
         return film;
+    }
+
+    private boolean validateFilm(Film film) {
+        return (film.getDescription().length() <= 200) &&
+                (!film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28)));
     }
 }

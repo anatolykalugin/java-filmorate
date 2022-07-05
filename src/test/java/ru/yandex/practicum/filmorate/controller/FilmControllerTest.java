@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,13 +10,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import ru.yandex.practicum.filmorate.exception.ItemAlreadyExistsException;
+import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,9 +28,14 @@ public class FilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    Gson gson = new GsonBuilder()
-            .registerTypeAdapter(LocalDate.class, new DateAdapter())
-            .create();
+    private static Gson gson;
+
+    @BeforeAll
+    public static void beforeAll() {
+        gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class, new DateAdapter())
+                .create();
+    }
 
     @Test
     @Order(1)
@@ -45,6 +53,11 @@ public class FilmControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertEquals(film, gson.fromJson(mvcResult.getResponse().getContentAsString(), Film.class));
+        FilmController fc = new FilmController();
+        fc.addNewFilm(film);
+        Exception exToTest = assertThrows(ItemAlreadyExistsException.class,
+                () -> fc.addNewFilm(film));
+        assertEquals("Фильм " + film.getName() + " уже добавлен в систему.", exToTest.getMessage());
     }
 
     @Test
@@ -75,7 +88,12 @@ public class FilmControllerTest {
                         .contentType("application/json")
                         .content(json))
                 .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof ValidationException))
+                .andExpect(result -> assertEquals("Валидация не пройдена",
+                        result.getResolvedException().getMessage()))
                 .andReturn();
+        Exception exToTest = assertThrows(NoSuchItemException.class, () -> new FilmController().updateFilm(film));
+        assertEquals("Невозможно изменить данный фильм", exToTest.getMessage());
     }
 
     @Test
@@ -89,7 +107,12 @@ public class FilmControllerTest {
                         .contentType("application/json")
                         .content(json))
                 .andExpect(status().isBadRequest())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof ValidationException))
+                .andExpect(result -> assertEquals("Валидация не пройдена",
+                        result.getResolvedException().getMessage()))
                 .andReturn();
+        Exception exToTest = assertThrows(ValidationException.class, () -> new FilmController().addNewFilm(film));
+        assertEquals("Валидация не пройдена", exToTest.getMessage());
     }
 
     @Test
