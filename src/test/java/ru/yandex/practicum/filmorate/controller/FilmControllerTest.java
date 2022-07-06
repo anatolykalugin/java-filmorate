@@ -89,7 +89,7 @@ public class FilmControllerTest {
                         .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof ValidationException))
-                .andExpect(result -> assertEquals("Валидация не пройдена",
+                .andExpect(result -> assertEquals("Слишком длинное описание",
                         result.getResolvedException().getMessage()))
                 .andReturn();
         Exception exToTest = assertThrows(NoSuchItemException.class, () -> new FilmController().updateFilm(film));
@@ -108,11 +108,11 @@ public class FilmControllerTest {
                         .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertTrue(result.getResolvedException() instanceof ValidationException))
-                .andExpect(result -> assertEquals("Валидация не пройдена",
+                .andExpect(result -> assertEquals("Слишком ранняя дата релиза",
                         result.getResolvedException().getMessage()))
                 .andReturn();
         Exception exToTest = assertThrows(ValidationException.class, () -> new FilmController().addNewFilm(film));
-        assertEquals("Валидация не пройдена", exToTest.getMessage());
+        assertEquals("Слишком ранняя дата релиза", exToTest.getMessage());
     }
 
     @Test

@@ -29,17 +29,15 @@ public class FilmController {
     @PostMapping
     public Film addNewFilm(@Valid @RequestBody Film film) {
         log.info("Запрос на добавление нового фильма");
-        if (!validateFilm(film)) {
-            log.warn("Валидация не пройдена");
-            throw new ValidationException("Валидация не пройдена");
+        if (validateFilm(film)) {
+            if (filmMap.containsKey(film.getId())) {
+                log.warn("Запрос на добавление уже существующего фильма");
+                throw new ItemAlreadyExistsException("Фильм " + film.getName() + " уже добавлен в систему.");
+            }
+            film.setId(id);
+            filmMap.put(film.getId(), film);
+            id++;
         }
-        if (filmMap.containsKey(film.getId())) {
-            log.warn("Запрос на добавление уже существующего фильма");
-            throw new ItemAlreadyExistsException("Фильм " + film.getName() + " уже добавлен в систему.");
-        }
-        film.setId(id);
-        filmMap.put(film.getId(), film);
-        id++;
         return film;
     }
 
@@ -47,11 +45,9 @@ public class FilmController {
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("Запрос на изменение фильма");
         if (filmMap.containsKey(film.getId())) {
-            if (!validateFilm(film)) {
-                log.warn("Валидация не пройдена");
-                throw new ValidationException("Валидация не пройдена");
+            if (validateFilm(film)) {
+                filmMap.put(film.getId(), film);
             }
-            filmMap.put(film.getId(), film);
         } else {
             throw new NoSuchItemException("Невозможно изменить данный фильм");
         }
@@ -59,7 +55,14 @@ public class FilmController {
     }
 
     private boolean validateFilm(Film film) {
-        return (film.getDescription().length() <= 200) &&
-                (!film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28)));
+        if (film.getDescription().length() > 200) {
+            log.warn("Неправильная длина описания");
+            throw new ValidationException("Слишком длинное описание");
+        }
+        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            log.warn("Неправильная дата релиза");
+            throw new ValidationException("Слишком ранняя дата релиза");
+        }
+        return true;
     }
 }
