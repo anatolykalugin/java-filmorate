@@ -6,7 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -14,6 +15,8 @@ import ru.yandex.practicum.filmorate.exception.ItemAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,7 +26,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = FilmController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class FilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -53,7 +57,7 @@ public class FilmControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertEquals(film, gson.fromJson(mvcResult.getResponse().getContentAsString(), Film.class));
-        FilmController fc = new FilmController();
+        FilmController fc = new FilmController(new FilmService(new InMemoryFilmStorage()));
         fc.addNewFilm(film);
         Exception exToTest = assertThrows(ItemAlreadyExistsException.class,
                 () -> fc.addNewFilm(film));
@@ -92,7 +96,8 @@ public class FilmControllerTest {
                 .andExpect(result -> assertEquals("Слишком длинное описание",
                         result.getResolvedException().getMessage()))
                 .andReturn();
-        Exception exToTest = assertThrows(NoSuchItemException.class, () -> new FilmController().updateFilm(film));
+        Exception exToTest = assertThrows(NoSuchItemException.class, () ->
+                new FilmController(new FilmService(new InMemoryFilmStorage())).updateFilm(film));
         assertEquals("Невозможно изменить данный фильм", exToTest.getMessage());
     }
 
@@ -111,7 +116,8 @@ public class FilmControllerTest {
                 .andExpect(result -> assertEquals("Слишком ранняя дата релиза",
                         result.getResolvedException().getMessage()))
                 .andReturn();
-        Exception exToTest = assertThrows(ValidationException.class, () -> new FilmController().addNewFilm(film));
+        Exception exToTest = assertThrows(ValidationException.class, ()
+                -> new FilmController(new FilmService(new InMemoryFilmStorage())).addNewFilm(film));
         assertEquals("Слишком ранняя дата релиза", exToTest.getMessage());
     }
 

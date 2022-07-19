@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -9,6 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class FilmService {
     private final FilmStorage filmStorage;
 
@@ -46,6 +48,7 @@ public class FilmService {
             filmStorage.getFilmById(id).getLikeList().remove(userId);
             filmStorage.getFilmById(id).setLikesAmount(filmStorage.getFilmById(id).getLikeList().size());
         } else {
+            log.warn("Запрос на удаление отсутствующего лайка");
             throw new NoSuchItemException("Лайк данного пользователя под этим фильмом отсутствует");
         }
     }

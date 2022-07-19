@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class UserService {
     private final UserStorage userStorage;
 
@@ -41,6 +43,7 @@ public class UserService {
             userStorage.getUserById(id).getFriendList().add(friendId);
             userStorage.getUserById(friendId).getFriendList().add(id);
         } else {
+            log.warn("Запрос на добавление в друзья отсутствующего юзера");
             throw new NoSuchItemException("Данный юзер отсутствует");
         }
     }
@@ -50,6 +53,7 @@ public class UserService {
             userStorage.getUserById(id).getFriendList().remove(friendId);
             userStorage.getUserById(friendId).getFriendList().remove(id);
         } else {
+            log.warn("Запрос на удаление из друзей отсутствующего друга");
             throw new NoSuchItemException("Данный друг отсутствует");
         }
     }
