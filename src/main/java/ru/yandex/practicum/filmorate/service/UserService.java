@@ -11,37 +11,42 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class UserService {
+public class UserService implements Serviceable<User> {
     private final UserStorage userStorage;
 
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
-    public List<User> showAllUsers() {
-        return userStorage.showAllUsers();
+    @Override
+    public List<User> showAll() {
+        return userStorage.showAll();
     }
 
-    public User createUser(User user) {
-        return userStorage.createUser(user);
+    @Override
+    public User addNew(User user) {
+        return userStorage.addNew(user);
     }
 
-    public User updateUser(User user) {
-        return userStorage.put(user);
+    @Override
+    public User update(User user) {
+        return userStorage.update(user);
     }
 
-    public User getUserById(long id) {
-        return userStorage.getUserById(id);
+    @Override
+    public User getById(long id) {
+        return userStorage.getById(id);
     }
 
-    public void deleteUserById(long id) {
-        userStorage.deleteUserById(id);
+    @Override
+    public void deleteById(long id) {
+        userStorage.deleteById(id);
     }
 
     public void addFriend(long id, long friendId) {
-        if (userStorage.getUserById(friendId) != null) {
-            userStorage.getUserById(id).getFriendList().add(friendId);
-            userStorage.getUserById(friendId).getFriendList().add(id);
+        if (userStorage.getById(friendId) != null) {
+            userStorage.getById(id).getFriendList().add(friendId);
+            userStorage.getById(friendId).getFriendList().add(id);
         } else {
             log.warn("Запрос на добавление в друзья отсутствующего юзера");
             throw new NoSuchItemException("Данный юзер отсутствует");
@@ -49,9 +54,9 @@ public class UserService {
     }
 
     public void deleteFriend(long id, long friendId) {
-        if (userStorage.getUserById(id).getFriendList().contains(friendId)) {
-            userStorage.getUserById(id).getFriendList().remove(friendId);
-            userStorage.getUserById(friendId).getFriendList().remove(id);
+        if (userStorage.getById(id).getFriendList().contains(friendId)) {
+            userStorage.getById(id).getFriendList().remove(friendId);
+            userStorage.getById(friendId).getFriendList().remove(id);
         } else {
             log.warn("Запрос на удаление из друзей отсутствующего друга");
             throw new NoSuchItemException("Данный друг отсутствует");
@@ -60,9 +65,9 @@ public class UserService {
 
     public List<User> showCommonFriends(long id, long friendId) {
         List<User> commonFriendList = new ArrayList<>();
-        for (Long commonFriendId : userStorage.getUserById(id).getFriendList()) {
-            if (userStorage.getUserById(friendId).getFriendList().contains(commonFriendId)) {
-                commonFriendList.add(userStorage.getUserById(commonFriendId));
+        for (Long commonFriendId : userStorage.getById(id).getFriendList()) {
+            if (userStorage.getById(friendId).getFriendList().contains(commonFriendId)) {
+                commonFriendList.add(userStorage.getById(commonFriendId));
             }
         }
         return commonFriendList;
@@ -70,8 +75,8 @@ public class UserService {
 
     public List<User> showFriends(long id) {
         List<User> friendList = new ArrayList<>();
-        for (Long friendId : userStorage.getUserById(id).getFriendList()) {
-            friendList.add(userStorage.getUserById(friendId));
+        for (Long friendId : userStorage.getById(id).getFriendList()) {
+            friendList.add(userStorage.getById(friendId));
         }
         return friendList;
     }

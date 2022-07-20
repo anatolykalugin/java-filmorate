@@ -23,12 +23,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     private long id = 1;
 
     @Override
-    public List<Film> showAllFilms() {
+    public List<Film> showAll() {
         return new ArrayList<>(filmMap.values());
     }
 
     @Override
-    public Film addNewFilm(Film film) {
+    public Film addNew(Film film) {
         log.info("Запрос на добавление нового фильма");
         if (validateFilm(film)) {
             if (filmMap.containsKey(film.getId())) {
@@ -43,7 +43,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film updateFilm(@Valid @RequestBody Film film) {
+    public Film update(@Valid @RequestBody Film film) {
         log.info("Запрос на изменение фильма");
         if (filmMap.containsKey(film.getId())) {
             if (validateFilm(film)) {
@@ -68,7 +68,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilmById(long id) {
+    public Film getById(long id) {
         if (filmMap.containsKey(id)) {
             return filmMap.get(id);
         } else {
@@ -77,7 +77,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void deleteFilmById(long id) {
+    public void deleteById(long id) {
         if (filmMap.containsKey(id)) {
             filmMap.remove(id);
         } else {

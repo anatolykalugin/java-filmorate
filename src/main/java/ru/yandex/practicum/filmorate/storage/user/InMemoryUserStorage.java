@@ -20,12 +20,12 @@ public class InMemoryUserStorage implements UserStorage {
     private long id = 1;
 
     @Override
-    public List<User> showAllUsers() {
+    public List<User> showAll() {
         return new ArrayList<>(userMap.values());
     }
 
     @Override
-    public User createUser(User user) {
+    public User addNew(User user) {
         if (user.getLogin().contains(" ")) {
             log.warn("Логин некорректен - " + user.getLogin());
             throw new ValidationException("Ошибка в логине.");
@@ -46,7 +46,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User put(User user) {
+    public User update(User user) {
         log.info("Запрос на изменение юзера");
         if (userMap.containsKey(user.getId())) {
             if (user.getLogin().contains(" ")) {
@@ -65,7 +65,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(long id) {
+    public User getById(long id) {
         if (userMap.containsKey(id)) {
             return userMap.get(id);
         } else {
@@ -74,7 +74,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public void deleteUserById(long id) {
+    public void deleteById(long id) {
         if (userMap.containsKey(id)) {
             userMap.remove(id);
         } else {

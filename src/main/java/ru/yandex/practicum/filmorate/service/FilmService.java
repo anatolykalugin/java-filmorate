@@ -11,42 +11,47 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class FilmService {
+public class FilmService implements Serviceable<Film> {
     private final FilmStorage filmStorage;
 
     public FilmService(FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
     }
 
-    public Film getFilmById(long id) {
-        return filmStorage.getFilmById(id);
+    @Override
+    public Film getById(long id) {
+        return filmStorage.getById(id);
     }
 
-    public void deleteFilmById(long id) {
-        filmStorage.deleteFilmById(id);
+    @Override
+    public void deleteById(long id) {
+        filmStorage.deleteById(id);
     }
 
-    public List<Film> showAllFilms() {
-        return filmStorage.showAllFilms();
+    @Override
+    public List<Film> showAll() {
+        return filmStorage.showAll();
     }
 
-    public Film addNewFilm(Film film) {
-        return filmStorage.addNewFilm(film);
+    @Override
+    public Film addNew(Film film) {
+        return filmStorage.addNew(film);
     }
 
-    public Film updateFilm(Film film) {
-        return filmStorage.updateFilm(film);
+    @Override
+    public Film update(Film film) {
+        return filmStorage.update(film);
     }
 
     public void addLike(long id, long userId) {
-        filmStorage.getFilmById(id).getLikeList().add(userId);
-        filmStorage.getFilmById(id).setLikesAmount(filmStorage.getFilmById(id).getLikeList().size());
+        filmStorage.getById(id).getLikeList().add(userId);
+        filmStorage.getById(id).setLikesAmount(filmStorage.getById(id).getLikeList().size());
     }
 
     public void deleteLike(long id, long userId) {
-        if (filmStorage.getFilmById(id).getLikeList().contains(userId)) {
-            filmStorage.getFilmById(id).getLikeList().remove(userId);
-            filmStorage.getFilmById(id).setLikesAmount(filmStorage.getFilmById(id).getLikeList().size());
+        if (filmStorage.getById(id).getLikeList().contains(userId)) {
+            filmStorage.getById(id).getLikeList().remove(userId);
+            filmStorage.getById(id).setLikesAmount(filmStorage.getById(id).getLikeList().size());
         } else {
             log.warn("Запрос на удаление отсутствующего лайка");
             throw new NoSuchItemException("Лайк данного пользователя под этим фильмом отсутствует");
@@ -54,7 +59,7 @@ public class FilmService {
     }
 
     public List<Film> showTopFilms(int size) {
-        Set<Film> sortedByLikes = filmStorage.showAllFilms().stream()
+        Set<Film> sortedByLikes = filmStorage.showAll().stream()
                 .sorted(Comparator.comparing(Film::getLikesAmount).reversed())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         List<Film> topFilms = new ArrayList<>();

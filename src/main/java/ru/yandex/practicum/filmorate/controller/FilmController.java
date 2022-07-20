@@ -22,31 +22,31 @@ public class FilmController {
     @GetMapping(value = "/{id}")
     public Film getFilmById(@PathVariable Long id) {
         log.info("Запрос на поиск фильма по ID");
-        return filmService.getFilmById(id);
+        return filmService.getById(id);
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
         log.info("Запрос на выдачу всех фильмов");
-        return filmService.showAllFilms();
+        return filmService.showAll();
     }
 
     @PostMapping
     public Film addNewFilm(@Valid @RequestBody Film film) {
         log.info("Запрос на добавление фильма");
-        return filmService.addNewFilm(film);
+        return filmService.addNew(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("Запрос на обновление фильма");
-        return filmService.updateFilm(film);
+        return filmService.update(film);
     }
 
     @DeleteMapping(value = "/{id}")
     public void deleteFilmById(@PathVariable Long id) {
         log.info("Запрос на удаление фильма по ID");
-        filmService.deleteFilmById(id);
+        filmService.deleteById(id);
     }
 
     @PutMapping(value = "/{id}/like/{userId}")

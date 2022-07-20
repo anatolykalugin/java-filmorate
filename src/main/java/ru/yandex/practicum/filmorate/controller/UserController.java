@@ -22,31 +22,31 @@ public class UserController {
     @GetMapping(value = "/{id}")
     public User getUserById(@PathVariable Long id) {
         log.info("Запрос на поиск пользователя по ID");
-        return userService.getUserById(id);
+        return userService.getById(id);
     }
 
     @GetMapping
     public List<User> getAllUsers() {
         log.info("Запрос на поиск пользователя по ID");
-        return userService.showAllUsers();
+        return userService.showAll();
     }
 
     @PostMapping
     public User addNewUser(@Valid @RequestBody User user) {
         log.info("Запрос на добавление пользователя");
-        return userService.createUser(user);
+        return userService.addNew(user);
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.info("Запрос на обновление пользователя");
-        return userService.updateUser(user);
+        return userService.update(user);
     }
 
     @DeleteMapping(value = "/{id}")
     public void deleteUser(@PathVariable Long id) {
         log.info("Запрос на удаление пользователя по ID");
-        userService.deleteUserById(id);
+        userService.deleteById(id);
     }
 
     @PutMapping(value = "/{id}/friends/{friendId}")
