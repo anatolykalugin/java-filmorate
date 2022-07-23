@@ -2,67 +2,75 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ItemAlreadyExistsException;
-import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
-    private final Map<Long, User> userMap = new HashMap<>();
-    private long id = 1;
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping(value = "/{id}")
+    public User getUserById(@PathVariable Long id) {
+        log.info("Запрос на поиск пользователя по ID");
+        return userService.getById(id);
+    }
 
     @GetMapping
-    public List<User> showAllUsers() {
-        return new ArrayList<>(userMap.values());
+    public List<User> getAllUsers() {
+        log.info("Запрос на поиск пользователя по ID");
+        return userService.showAll();
     }
 
     @PostMapping
-    public User createUser(@Valid @RequestBody User user) {
-        log.info("Запрос на добавление нового юзера");
-        if (user.getLogin().contains(" ")) {
-            log.warn("Логин некорректен - " + user.getLogin());
-            throw new ValidationException("Ошибка в логине.");
-        }
-        if (user.getName().isBlank()) {
-            log.info("Замена имени на логин");
-            user.setName(user.getLogin());
-        }
-        if (userMap.containsKey(user.getId())) {
-            log.warn("Запрос на добавление уже существующего юзера");
-            throw new ItemAlreadyExistsException("Пользователь с данным ID " +
-                    user.getId() + " уже зарегистрирован.");
-        }
-        user.setId(id);
-        userMap.put(user.getId(), user);
-        id++;
-        return user;
+    public User addNewUser(@Valid @RequestBody User user) {
+        log.info("Запрос на добавление пользователя");
+        return userService.addNew(user);
     }
 
     @PutMapping
-    public User put(@Valid @RequestBody User user) {
-        log.info("Запрос на изменение юзера");
-        if (userMap.containsKey(user.getId())) {
-            if (user.getLogin().contains(" ")) {
-                log.warn("Логин некорректен - " + user.getLogin());
-                throw new ValidationException("Ошибка в логине.");
-            }
-            if (user.getName().isBlank()) {
-                log.warn("Замена имени на логин");
-                user.setName(user.getLogin());
-            }
-            userMap.put(user.getId(), user);
-        } else {
-            throw new NoSuchItemException("Невозможно изменить данного юзера");
-        }
-        return user;
+    public User updateUser(@Valid @RequestBody User user) {
+        log.info("Запрос на обновление пользователя");
+        return userService.update(user);
     }
+
+    @DeleteMapping(value = "/{id}")
+    public void deleteUser(@PathVariable Long id) {
+        log.info("Запрос на удаление пользователя по ID");
+        userService.deleteById(id);
+    }
+
+    @PutMapping(value = "/{id}/friends/{friendId}")
+    public void addToFriends(@PathVariable Long id, @PathVariable Long friendId) {
+        log.info("Запрос на добавление друга");
+        userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping(value = "/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        log.info("Запрос на удаление друга");
+        userService.deleteFriend(id, friendId);
+    }
+
+    @GetMapping(value = "/{id}/friends")
+    public List<User> showFriends(@PathVariable Long id) {
+        log.info("Запрос на выдачу всех друзей");
+        return userService.showFriends(id);
+    }
+
+    @GetMapping(value = "/{id}/friends/common/{otherId}")
+    public List<User> showCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        log.info("Запрос на выдачу общих друзей");
+        return userService.showCommonFriends(id, otherId);
+    }
+
 }
