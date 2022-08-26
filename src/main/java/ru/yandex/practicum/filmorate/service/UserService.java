@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -14,6 +15,7 @@ import java.util.List;
 public class UserService implements Serviceable<User> {
     private final UserStorage userStorage;
 
+    @Autowired
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
@@ -25,28 +27,61 @@ public class UserService implements Serviceable<User> {
 
     @Override
     public User addNew(User user) {
-        return userStorage.addNew(user);
+        if (user.getLogin().contains(" ")) {
+            log.warn("Логин некорректен - " + user.getLogin());
+            throw new ValidationException("Ошибка в логине.");
+        }
+        if (user.getName().isBlank()) {
+            log.info("Замена имени на логин");
+            user.setName(user.getLogin());
+        }
+        userStorage.addNew(user);
+        log.info("Добавляем юзера успешно");
+        return user;
     }
 
     @Override
     public User update(User user) {
-        return userStorage.update(user);
+        if (getById(user.getId()) != null) {
+            if (user.getLogin().contains(" ")) {
+                log.warn("Логин некорректен - " + user.getLogin());
+                throw new ValidationException("Ошибка в логине.");
+            }
+            if (user.getName().isBlank()) {
+                log.warn("Замена имени на логин");
+                user.setName(user.getLogin());
+            }
+            userStorage.update(user);
+            log.info("Юзер успешно обновлен");
+        } else {
+            throw new NoSuchItemException("Нет такого юзера");
+        }
+        return user;
     }
 
     @Override
     public User getById(long id) {
+        if (userStorage.getById(id) == null) {
+            throw new NoSuchItemException("Нет пользователя с таким айди: " + id);
+        }
+        log.info("Юзер по айди найден");
         return userStorage.getById(id);
     }
 
     @Override
     public void deleteById(long id) {
-        userStorage.deleteById(id);
+        if (userStorage.getById(id) != null) {
+            userStorage.deleteById(id);
+            log.info("Юзера удалили успешно");
+        } else {
+            log.warn("Запрос на удаление отсутствующего юзера");
+            throw new NoSuchItemException("Данный юзер отсутствует");
+        }
     }
 
     public void addFriend(long id, long friendId) {
         if (userStorage.getById(friendId) != null) {
-            userStorage.getById(id).getFriendList().add(friendId);
-            userStorage.getById(friendId).getFriendList().add(id);
+            userStorage.addFriend(id, friendId);
         } else {
             log.warn("Запрос на добавление в друзья отсутствующего юзера");
             throw new NoSuchItemException("Данный юзер отсутствует");
@@ -54,30 +89,19 @@ public class UserService implements Serviceable<User> {
     }
 
     public void deleteFriend(long id, long friendId) {
-        if (userStorage.getById(id).getFriendList().contains(friendId)) {
-            userStorage.getById(id).getFriendList().remove(friendId);
-            userStorage.getById(friendId).getFriendList().remove(id);
-        } else {
-            log.warn("Запрос на удаление из друзей отсутствующего друга");
-            throw new NoSuchItemException("Данный друг отсутствует");
-        }
+        userStorage.deleteFriend(id, friendId);
+        log.info("Друга удалили успешно");
     }
 
     public List<User> showCommonFriends(long id, long friendId) {
-        List<User> commonFriendList = new ArrayList<>();
-        for (Long commonFriendId : userStorage.getById(id).getFriendList()) {
-            if (userStorage.getById(friendId).getFriendList().contains(commonFriendId)) {
-                commonFriendList.add(userStorage.getById(commonFriendId));
-            }
-        }
+        List<User> commonFriendList = userStorage.showCommonFriends(id, friendId);
+        log.info("Успешно выведены общие друзья");
         return commonFriendList;
     }
 
     public List<User> showFriends(long id) {
-        List<User> friendList = new ArrayList<>();
-        for (Long friendId : userStorage.getById(id).getFriendList()) {
-            friendList.add(userStorage.getById(friendId));
-        }
+        List<User> friendList = userStorage.showFriends(id);
+        log.info("Список друзей сформирован");
         return friendList;
     }
 }

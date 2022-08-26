@@ -2,30 +2,47 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ItemAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @Slf4j
 public class FilmService implements Serviceable<Film> {
     private final FilmStorage filmStorage;
+    private final UserService userService;
+    private final GenreService genreService;
 
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService) {
         this.filmStorage = filmStorage;
+        this.userService = userService;
+        this.genreService = genreService;
     }
 
     @Override
     public Film getById(long id) {
+        if (id <= 0) {
+            log.warn("Айди меньше или равен нулю");
+            throw new NoSuchItemException("Нет фильма с таким айди: " + id);
+        }
+        log.info("Успешно найден фильм");
         return filmStorage.getById(id);
     }
 
     @Override
     public void deleteById(long id) {
-        filmStorage.deleteById(id);
+        if (filmStorage.getById(id) != null) {
+            filmStorage.deleteById(id);
+            log.info("Фильм удалили успешно");
+        } else {
+            log.warn("Запрос на удаление отсутствующего фильма");
+            throw new NoSuchItemException("Данный фильм отсутствует");
+        }
     }
 
     @Override
@@ -35,40 +52,61 @@ public class FilmService implements Serviceable<Film> {
 
     @Override
     public Film addNew(Film film) {
-        return filmStorage.addNew(film);
+        if (validateFilm(film)) {
+            filmStorage.addNew(film);
+        }
+        if (film.getGenres() != null && film.getGenres().size() > 0) {
+            genreService.addGenresToFilm(film);
+        }
+        return film;
     }
 
     @Override
     public Film update(Film film) {
-        return filmStorage.update(film);
+        if (validateFilm(film)) {
+            if (film.getId() <= 0) {
+                log.warn("Айди меньше или равен нулю");
+                throw new NoSuchItemException("Некорректный айди фильма");
+            }
+            genreService.addGenresToFilm(film);
+            filmStorage.update(film);
+        }
+        return film;
     }
 
     public void addLike(long id, long userId) {
-        filmStorage.getById(id).getLikeList().add(userId);
-        filmStorage.getById(id).setLikesAmount(filmStorage.getById(id).getLikeList().size());
+        if (filmStorage.hasUsersLike(id, userId)) {
+            log.warn("Уже есть лайк от пользователя");
+            throw new ItemAlreadyExistsException("Уже есть лайк от этого пользователя");
+        } else {
+            filmStorage.addLike(id, userId);
+            log.info("Лайк успешно добавлен");
+        }
     }
 
     public void deleteLike(long id, long userId) {
-        if (filmStorage.getById(id).getLikeList().contains(userId)) {
-            filmStorage.getById(id).getLikeList().remove(userId);
-            filmStorage.getById(id).setLikesAmount(filmStorage.getById(id).getLikeList().size());
+        if (filmStorage.hasUsersLike(id, userId)) {
+            filmStorage.deleteLike(id, userId);
+            log.info("Лайк успешно удален");
         } else {
-            log.warn("Запрос на удаление отсутствующего лайка");
-            throw new NoSuchItemException("Лайк данного пользователя под этим фильмом отсутствует");
+            log.warn("Нет лайка от пользователя");
+            throw new NoSuchItemException("Нет лайков от этого пользователя");
         }
     }
 
     public List<Film> showTopFilms(int size) {
-        Set<Film> sortedByLikes = filmStorage.showAll().stream()
-                .sorted(Comparator.comparing(Film::getLikesAmount).reversed())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        List<Film> topFilms = new ArrayList<>();
-        Iterator<Film> iter = sortedByLikes.iterator();
-        for (int n = 0; n < size && iter.hasNext(); n++) {
-            Film film = iter.next();
-            topFilms.add(film);
-        }
-        return topFilms;
+        return filmStorage.showTopFilms(size);
     }
 
+    private boolean validateFilm(Film film) {
+        if (film.getDescription().length() > 200) {
+            log.warn("Неправильная длина описания");
+            throw new ValidationException("Слишком длинное описание");
+        }
+        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            log.warn("Неправильная дата релиза");
+            throw new ValidationException("Слишком ранняя дата релиза");
+        }
+        return true;
+    }
 }
