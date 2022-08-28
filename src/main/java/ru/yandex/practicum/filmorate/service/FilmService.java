@@ -15,12 +15,10 @@ import java.util.List;
 @Slf4j
 public class FilmService implements Serviceable<Film> {
     private final FilmStorage filmStorage;
-    private final UserService userService;
     private final GenreService genreService;
 
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService) {
+    public FilmService(FilmStorage filmStorage, GenreService genreService) {
         this.filmStorage = filmStorage;
-        this.userService = userService;
         this.genreService = genreService;
     }
 
