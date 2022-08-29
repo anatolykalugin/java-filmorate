@@ -46,6 +46,7 @@ public class FilmDbStorage implements FilmStorage {
             return statement;
         }, keyHolder);
         film.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
+        film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
         genreService.addGenresToFilm(film);
         return film;
     }
@@ -64,6 +65,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getMpa().getId(),
                 film.getId()
         );
+        film.setMpa(mpaService.getMpaById(film.getMpa().getId()));
         genreService.addGenresToFilm(film);
         return film;
     }
