@@ -6,17 +6,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import ru.yandex.practicum.filmorate.exception.ItemAlreadyExistsException;
-import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,8 +24,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@AutoConfigureTestDatabase
 @AutoConfigureMockMvc
+@SpringBootTest
 public class FilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -44,12 +43,11 @@ public class FilmControllerTest {
     @Test
     @Order(1)
     public void shouldAddANewFilmWithBorderlineValues() throws Exception {
-        Film film = new Film("Men", "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm" +
+        Film film = new Film(1L,"Men", "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm" +
                 "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm" +
                 "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm",
                 LocalDate.of(1895, 12, 28),
-                1);
-        film.setId(1);
+                1, new Mpa(1, "G"));
         String json = gson.toJson(film);
         MvcResult mvcResult = mockMvc.perform(post("/films")
                 .contentType("application/json")
@@ -57,19 +55,13 @@ public class FilmControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertEquals(film, gson.fromJson(mvcResult.getResponse().getContentAsString(), Film.class));
-        FilmController fc = new FilmController(new FilmService(new InMemoryFilmStorage()));
-        fc.addNewFilm(film);
-        Exception exToTest = assertThrows(ItemAlreadyExistsException.class,
-                () -> fc.addNewFilm(film));
-        assertEquals("Фильм " + film.getName() + " уже добавлен в систему.", exToTest.getMessage());
     }
 
     @Test
     @Order(2)
     public void shouldFailAddingANewFilmEmptyName() throws Exception {
-        Film film = new Film(" ", "Rom-Com", LocalDate.of(2010, 10, 1),
-                90);
-        film.setId(2);
+        Film film = new Film(2L, " ", "Rom-Com", LocalDate.of(2010, 10, 1),
+                90, new Mpa(1, "G"));
         String json = gson.toJson(film);
         mockMvc.perform(post("/films")
                         .contentType("application/json")
@@ -81,12 +73,11 @@ public class FilmControllerTest {
     @Test
     @Order(3)
     public void shouldFailAddingANewFilmTooLongDescription201Chars() throws Exception {
-        Film film = new Film("Sinister", "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm" +
+        Film film = new Film(3L, "Sinister", "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm" +
                 "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm" +
                 "HorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilmHorrorFilm1",
                 LocalDate.of(2012, 10, 30),
-                100);
-        film.setId(3);
+                100, new Mpa(1, "G"));
         String json = gson.toJson(film);
         mockMvc.perform(post("/films")
                         .contentType("application/json")
@@ -96,17 +87,13 @@ public class FilmControllerTest {
                 .andExpect(result -> assertEquals("Слишком длинное описание",
                         result.getResolvedException().getMessage()))
                 .andReturn();
-        Exception exToTest = assertThrows(NoSuchItemException.class, () ->
-                new FilmController(new FilmService(new InMemoryFilmStorage())).updateFilm(film));
-        assertEquals("Невозможно изменить данный фильм", exToTest.getMessage());
     }
 
     @Test
     @Order(4)
     public void shouldFailAddingANewFilmDateTooEarly() throws Exception {
-        Film film = new Film("Men", "Horror", LocalDate.of(1895, 12, 27),
-                100);
-        film.setId(4);
+        Film film = new Film(4L,"Men", "Horror", LocalDate.of(1895, 12, 27),
+                100, new Mpa(1, "G"));
         String json = gson.toJson(film);
         mockMvc.perform(post("/films")
                         .contentType("application/json")
@@ -116,17 +103,13 @@ public class FilmControllerTest {
                 .andExpect(result -> assertEquals("Слишком ранняя дата релиза",
                         result.getResolvedException().getMessage()))
                 .andReturn();
-        Exception exToTest = assertThrows(ValidationException.class, ()
-                -> new FilmController(new FilmService(new InMemoryFilmStorage())).addNewFilm(film));
-        assertEquals("Слишком ранняя дата релиза", exToTest.getMessage());
     }
 
     @Test
     @Order(5)
     public void shouldFailAddingANewFilmNegativeDuration() throws Exception {
-        Film film = new Film("Men", "Horror", LocalDate.of(2022, 5, 15),
-                -1);
-        film.setId(5);
+        Film film = new Film(5L, "Men", "Horror", LocalDate.of(2022, 5, 15),
+                -1, new Mpa(1, "G"));
         String json = gson.toJson(film);
         mockMvc.perform(post("/films")
                         .contentType("application/json")
@@ -138,9 +121,8 @@ public class FilmControllerTest {
     @Test
     @Order(6)
     public void shouldUpdateAnExistingFilm() throws Exception {
-        Film film = new Film("Men", "Horror", LocalDate.of(1895, 12, 28),
-                1);
-        film.setId(1);
+        Film film = new Film(1L,"Men", "Horror", LocalDate.of(1895, 12, 28),
+                1, new Mpa(1, "G"));
         String json = gson.toJson(film);
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/films")
                         .contentType("application/json")
@@ -158,6 +140,15 @@ public class FilmControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertNotNull(gson.fromJson(mvcResult.getResponse().getContentAsString(), List.class));
+    }
+
+    @Test
+    @Order(8)
+    public void shouldThrow404() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/films/9")
+                        .contentType("application/json"))
+                .andExpect(status().isNotFound())
+                .andReturn();
     }
 
 }
