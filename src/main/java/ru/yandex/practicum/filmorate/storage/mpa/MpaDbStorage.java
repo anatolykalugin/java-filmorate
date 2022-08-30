@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.mpa;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
@@ -23,12 +24,12 @@ public class MpaDbStorage implements MpaStorage {
 
     @Override
     public Mpa getById(int id) {
-        if (id < 1 || id > 5) {
-            log.warn("Неверный айди МПА");
-            throw new NoSuchItemException("Нет такого МПА");
-        } else {
+        try {
             String sqlQuery = "SELECT MPA_ID, MPA_NAME FROM MPA WHERE MPA_ID = ?;";
             return jdbcTemplate.queryForObject(sqlQuery, this::assembleMpa, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Неверный айди МПА");
+            throw new NoSuchItemException("Нет такого МПА");
         }
     }
 

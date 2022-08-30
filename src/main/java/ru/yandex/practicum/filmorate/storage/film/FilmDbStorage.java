@@ -1,10 +1,13 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.GenreService;
@@ -19,6 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Repository
+@Slf4j
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreService genreService;
@@ -78,9 +82,14 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getById(long id) {
-        String sqlQuery = "SELECT FILM_ID, FILM_NAME, DESCRIPTION, RELEASE_DATE, DURATION, F.MPA_ID, M.MPA_NAME " +
-                "FROM FILMS F JOIN MPA M on F.MPA_ID = M.MPA_ID WHERE FILM_ID = ?;";
-        return jdbcTemplate.queryForObject(sqlQuery, this::assembleFilm, id);
+        try {
+            String sqlQuery = "SELECT FILM_ID, FILM_NAME, DESCRIPTION, RELEASE_DATE, DURATION, F.MPA_ID, M.MPA_NAME " +
+                    "FROM FILMS F JOIN MPA M on F.MPA_ID = M.MPA_ID WHERE FILM_ID = ?;";
+            return jdbcTemplate.queryForObject(sqlQuery, this::assembleFilm, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Запрос на выдачу отсутствующего фильма");
+            throw new NoSuchItemException("Отсутствует такой юзер");
+        }
     }
 
     @Override

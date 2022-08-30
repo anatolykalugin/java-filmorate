@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.genre;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NoSuchItemException;
@@ -26,12 +27,12 @@ public class GenreDbStorage implements GenreStorage {
 
     @Override
     public Genre getById(int id) {
-        if (id < 1 || id > 6) {
-            log.warn("Неверный айди жанра");
-            throw new NoSuchItemException("Нет такого жанра");
-        } else {
+        try {
             String sqlQuery = "SELECT GENRE_ID, GENRE_NAME FROM GENRES WHERE GENRE_ID = ?;";
             return jdbcTemplate.queryForObject(sqlQuery, this::assembleGenre, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Неверный айди жанра");
+            throw new NoSuchItemException("Нет такого жанра");
         }
     }
 

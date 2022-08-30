@@ -26,9 +26,8 @@ public class FilmService implements Serviceable<Film> {
     public Film getById(long id) {
         if (id <= 0) {
             log.warn("Айди меньше или равен нулю");
-            throw new NoSuchItemException("Нет фильма с таким айди: " + id);
+            throw new NoSuchItemException("Некорректный айди фильма: " + id);
         }
-        log.info("Успешно найден фильм");
         return filmStorage.getById(id);
     }
 

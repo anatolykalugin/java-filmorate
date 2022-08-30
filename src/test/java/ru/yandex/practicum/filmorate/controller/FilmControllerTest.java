@@ -142,4 +142,13 @@ public class FilmControllerTest {
         assertNotNull(gson.fromJson(mvcResult.getResponse().getContentAsString(), List.class));
     }
 
+    @Test
+    @Order(8)
+    public void shouldThrow404() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/films/9")
+                        .contentType("application/json"))
+                .andExpect(status().isNotFound())
+                .andReturn();
+    }
+
 }

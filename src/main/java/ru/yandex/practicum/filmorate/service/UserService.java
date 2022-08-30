@@ -61,10 +61,10 @@ public class UserService implements Serviceable<User> {
 
     @Override
     public User getById(long id) {
-        if (userStorage.getById(id) == null) {
+        if (id <= 0) {
+            log.warn("Айди меньше или равен нулю");
             throw new NoSuchItemException("Нет пользователя с таким айди: " + id);
         }
-        log.info("Юзер по айди найден");
         return userStorage.getById(id);
     }
 

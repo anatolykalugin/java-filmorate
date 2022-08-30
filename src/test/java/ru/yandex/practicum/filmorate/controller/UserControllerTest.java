@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -112,5 +113,14 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertNotNull(gson.fromJson(result.getResponse().getContentAsString(), List.class));
+    }
+
+    @Test
+    @Order(7)
+    public void shouldThrow404() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/9")
+                        .contentType("application/json"))
+                .andExpect(status().isNotFound())
+                .andReturn();
     }
 }

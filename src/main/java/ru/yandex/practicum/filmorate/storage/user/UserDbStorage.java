@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Repository
+@Slf4j
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
@@ -63,6 +65,7 @@ public class UserDbStorage implements UserStorage {
                     userSearch.getString("USER_NAME"),
                     LocalDate.parse(userSearch.getString("BIRTHDAY")));
         } else {
+            log.warn("Запрос на выдачу отсутствующего юзера");
             throw new NoSuchItemException("Не найден юзер");
         }
     }
